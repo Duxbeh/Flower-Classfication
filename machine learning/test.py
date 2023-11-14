@@ -37,7 +37,7 @@ data_transforms = {
     ]),
 }
 
-data_dir = ("flowers")
+data_dir = ("/home/anujv/Documents/GitHub/Flower-Classfication/machine learning/flowers")
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
                   for x in ['train', 'val']}
@@ -50,7 +50,7 @@ dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class_names = image_datasets['train'].classes
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(class_names)
+
 
 
 def imshow(inp, title=None):
