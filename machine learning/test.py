@@ -37,20 +37,20 @@ data_transforms = {
     ]),
 }
 
-data_dir = ("/home/anujv/Documents/GitHub/Flower-Classfication/machine learning/flowers")
+data_dir = (
+    "/home/senpi/Documents/GitHub/Flower-Classfication/machine learning/flowers")
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
                   for x in ['train', 'val']}
 # Update the number of workers for data loading
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
-                                          shuffle=True, num_workers=num_cores)
+                                              shuffle=True, num_workers=num_cores)
                for x in ['train', 'val']}
 
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class_names = image_datasets['train'].classes
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 
 def imshow(inp, title=None):
@@ -109,8 +109,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs):
                         optimizer.zero_grad()
                         loss.backward()
                         optimizer.step()
-                        #train_losses.append(loss.item())
-                    #val_losses.append(loss.item())
+                        # train_losses.append(loss.item())
+                    # val_losses.append(loss.item())
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
