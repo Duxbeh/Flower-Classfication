@@ -12,65 +12,6 @@ import copy
 from torch.utils.tensorboard import SummaryWriter
 import multiprocessing
 
-mean = np.array([0.485, 0.456, 0.406])
-std = np.array([0.229, 0.224, 0.225])
-
-# Get the number of CPU cores available
-num_cores = multiprocessing.cpu_count()
-
-val_losses = []
-train_losses = []
-writer = SummaryWriter()
-
-data_transforms = {
-    'train': transforms.Compose([
-        transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ]),
-    'val': transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean, std)
-    ]),
-}
-
-data_dir = (
-    "/home/senpi/Documents/GitHub/Flower-Classfication/machine learning/flowers")
-image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
-                                          data_transforms[x])
-                  for x in ['train', 'val']}
-# Update the number of workers for data loading
-dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
-                                              shuffle=True, num_workers=num_cores)
-               for x in ['train', 'val']}
-
-dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
-class_names = image_datasets['train'].classes
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-def imshow(inp, title=None):
-    """Imshow for Tensor."""
-    inp = inp.numpy().transpose((1, 2, 0))
-    inp = std * inp + mean
-    inp = np.clip(inp, 0, 1)
-    plt.imshow(inp)
-    plt.title(title)
-    plt.show()
-
-
-# Get a batch of training data
-inputs, classes = next(iter(dataloaders['train']))
-
-# Make a grid from batch
-out = torchvision.utils.make_grid(inputs)
-
-imshow(out, title=[class_names[x] for x in classes])
-
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs):
     since = time.time()
@@ -148,6 +89,16 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs):
     return model
 
 
+def imshow(inp, title=None):
+    """Imshow for Tensor."""
+    inp = inp.numpy().transpose((1, 2, 0))
+    inp = std * inp + mean
+    inp = np.clip(inp, 0, 1)
+    plt.imshow(inp)
+    plt.title(title)
+    plt.show()
+
+
 def visualize_model(model, num_images=6):
     was_training = model.training
     model.eval()
@@ -175,24 +126,73 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 
-model_conv = torchvision.models.resnet18(pretrained=True)
-for param in model_conv.parameters():
-    param.requires_grad = False
+if __name__ == "__main__":
+    print(torch.version.cuda)
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
 
-# Parameters of newly constructed modules have requires_grad=True by default
-num_ftrs = model_conv.fc.in_features
-model_conv.fc = nn.Linear(num_ftrs, 5)
+    # Get the number of CPU cores available
+    num_cores = multiprocessing.cpu_count()
 
-model_conv = model_conv.to(device)
+    val_losses = []
+    train_losses = []
+    writer = SummaryWriter()
 
-criterion = nn.CrossEntropyLoss()
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ]),
+    }
 
-# Observe that only parameters of final layer are being optimized as
-# opposed to before.
-optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
+    data_dir = ("C:/Users/anuj1/OneDrive/Files/GitHub/Flower-Classfication/machine learning/flowers")
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
+                                              data_transforms[x])
+                      for x in ['train', 'val']}
+    # Update the number of workers for data loading
+    dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
+                                                  shuffle=True, num_workers=num_cores)
+                   for x in ['train', 'val']}
 
-# Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
+    dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
+    class_names = image_datasets['train'].classes
 
-model_conv = train_model(model_conv, criterion, optimizer_conv,
-                         exp_lr_scheduler, num_epochs=100)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Get a batch of training data
+    inputs, classes = next(iter(dataloaders['train']))
+
+    # Make a grid from batch
+    out = torchvision.utils.make_grid(inputs)
+
+    imshow(out, title=[class_names[x] for x in classes])
+
+    model_conv = torchvision.models.resnet18(weights='imagenet')
+    for param in model_conv.parameters():
+        param.requires_grad = False
+
+    # Parameters of newly constructed modules have requires_grad=True by default
+    num_ftrs = model_conv.fc.in_features
+    model_conv.fc = nn.Linear(num_ftrs, 5)
+
+    model_conv = model_conv.to(device)
+
+    criterion = nn.CrossEntropyLoss()
+
+    # Observe that only parameters of final layer are being optimized as
+    # opposed to before.
+    optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
+
+    # Decay LR by a factor of 0.1 every 7 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
+
+    model_conv = train_model(model_conv, criterion, optimizer_conv,
+                             exp_lr_scheduler, num_epochs=100)
